@@ -4,31 +4,31 @@
         <div class="stat-cards">
             <div class="stat-card">
                 <div>
-                    <div class="label">👤 总用户数</div>
-                    <div class="value blue">{{ stats.total }}</div>
+                    <span class="label">👤 总用户数</span>
+                    <span class="value blue">{{ stats.total }}</span>
                 </div>
-                <span class="icon">👥</span>
+                
             </div>
             <div class="stat-card">
                 <div>
-                    <div class="label">✅ 启用用户</div>
-                    <div class="value green">{{ stats.active }}</div>
+                    <span class="label">✅ 启用用户</span>
+                    <span class="value green">{{ stats.active }}</span>
                 </div>
-                <span class="icon">✔️</span>
+               
             </div>
             <div class="stat-card">
                 <div>
-                    <div class="label">⛔ 禁用用户</div>
-                    <div class="value orange">{{ stats.inactive }}</div>
+                    <span class="label">⛔ 禁用用户</span>
+                    <span class="value orange">{{ stats.inactive }}</span>
                 </div>
-                <span class="icon">🚫</span>
+               
             </div>
             <div class="stat-card">
                 <div>
-                    <div class="label">📅 7日新增</div>
-                    <div class="value purple">{{ stats.recentWeek }}</div>
+                    <span class="label">📅 7日新增</span>
+                    <span class="value purple">{{ stats.recentWeek }}</span>
                 </div>
-                <span class="icon">🆕</span>
+            
             </div>
         </div>
 

@@ -112,10 +112,11 @@ const onDataChanged = () => {
     opacity: 0.8;
 }
 
+
 /* 统计卡片 */
 .stat-cards {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
     margin-bottom: 20px;
 }
@@ -127,14 +128,17 @@ const onDataChanged = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    white-space: nowrap;
 }
 .stat-card .label {
     font-size: 13px;
     color: #909399;
+    white-space: nowrap;
 }
 .stat-card .value {
     font-size: 28px;
     font-weight: 700;
+    white-space: nowrap;
 }
 .stat-card .value.green { color: #67C23A; }
 .stat-card .value.orange { color: #E6A23C; }
@@ -187,6 +191,9 @@ const onDataChanged = () => {
     gap: 30px;
     flex-wrap: wrap;
     padding: 10px 0;
+}
+.legend > div {
+    white-space: nowrap;
 }
 .legend .dot {
     display: inline-block;
