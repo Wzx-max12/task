@@ -39,31 +39,30 @@
                 <div>
                     <span class="dot green"></span> 启用
                     <strong>{{ stats.active }}</strong> 人
-                    <span style="color:#909399;font-size:13px;">({{ getPercent('active') }})</span>
+                    <span style="color:#909399;font-size:13px;">({{ activePercent }})</span>
                 </div>
                 <div>
                     <span class="dot red"></span> 禁用
                     <strong>{{ stats.inactive }}</strong> 人
-                    <span style="color:#909399;font-size:13px;">({{ getPercent('inactive') }})</span>
+                    <span style="color:#909399;font-size:13px;">({{ inactivePercent }})</span>
                 </div>
                 <div style="color:#909399;">
                     总用户：<strong>{{ stats.total }}</strong>
                 </div>
             </div>
             <div class="status-bar">
-                <div class="active" :style="{ width: getPercent('active') }"></div>
-                <div class="inactive" :style="{ width: getPercent('inactive') }"></div>
-            </div>
-            <div style="margin-top:16px;">
-                <el-button type="primary" @click="loadStats">刷新统计</el-button>
+                <div class="active" :style="{ width: activePercent }"></div>
+                <div class="inactive" :style="{ width: inactivePercent }"></div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, computed, onMounted, ref } from 'vue'
 import { getStatsSummary } from '../api/user.js'
+
+// 数据状态
 const stats = reactive({
     total: 0,
     active: 0,
@@ -71,7 +70,22 @@ const stats = reactive({
     recentWeek: 0
 })
 
+const loading = ref(false)
+
+// ✅ computed：百分比（自动计算，不用每次调用函数）
+const activePercent = computed(() => {
+    if (stats.total === 0) return '0%'
+    return ((stats.active / stats.total) * 100).toFixed(1) + '%'
+})
+
+const inactivePercent = computed(() => {
+    if (stats.total === 0) return '0%'
+    return ((stats.inactive / stats.total) * 100).toFixed(1) + '%'
+})
+
+// 加载统计数据
 const loadStats = async () => {
+    loading.value = true
     try {
         const res = await getStatsSummary()
         if (res.code === 200) {
@@ -82,18 +96,16 @@ const loadStats = async () => {
             stats.recentWeek = d.recentWeek ?? 0
         }
     } catch (err) {
-        console.error('统计加载失败', err)
+        console.error('统计加载失败:', err)
+    } finally {
+        loading.value = false
     }
 }
 
-const getPercent = (type) => {
-    if (stats.total === 0) return '0%'
-    const count = type === 'active' ? stats.active : stats.inactive
-    return ((count / stats.total) * 100).toFixed(1) + '%'
-}
-
+// 暴露给父组件
 defineExpose({ loadStats })
 
+// 生命周期：页面加载时自动获取统计
 onMounted(() => {
     loadStats()
 })

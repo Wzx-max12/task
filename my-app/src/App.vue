@@ -83,33 +83,16 @@ const openEditDialog = (row) => {
 
 const onFormSuccess = () => {
     dialogVisible.value = false
-    if (tableRef.value) {
-        tableRef.value.loadData()
-    }
-    if (statsRef.value) {
-        statsRef.value.loadStats()
-    }
+    tableRef.value?.loadData()
+    statsRef.value?.loadStats()
 }
 
 const onDataChanged = () => {
-    if (statsRef.value) {
-        statsRef.value.loadStats()
-    }
+    statsRef.value?.loadStats()
 }
 </script>
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 
-body {
-    font-family: 'Microsoft YaHei', sans-serif;
-    background: #f0f2f5;
-    padding: 20px;
-}
-
+<style scoped>
 /* 头部 */
 .header {
     background: linear-gradient(135deg, #409EFF, #2d6bb8);
@@ -153,18 +136,10 @@ body {
     font-size: 28px;
     font-weight: 700;
 }
-.stat-card .value.green {
-    color: #67C23A;
-}
-.stat-card .value.orange {
-    color: #E6A23C;
-}
-.stat-card .value.blue {
-    color: #409EFF;
-}
-.stat-card .value.purple {
-    color: #9B59B6;
-}
+.stat-card .value.green { color: #67C23A; }
+.stat-card .value.orange { color: #E6A23C; }
+.stat-card .value.blue { color: #409EFF; }
+.stat-card .value.purple { color: #9B59B6; }
 .stat-card .icon {
     font-size: 30px;
     opacity: 0.5;
@@ -185,7 +160,7 @@ body {
     flex-wrap: wrap;
     align-items: center;
 }
-.search-bar .el-input {
+.search-bar :deep(.el-input) {
     width: 180px;
 }
 
@@ -220,12 +195,8 @@ body {
     border-radius: 50%;
     margin-right: 6px;
 }
-.legend .dot.green {
-    background: #67C23A;
-}
-.legend .dot.red {
-    background: #F56C6C;
-}
+.legend .dot.green { background: #67C23A; }
+.legend .dot.red { background: #F56C6C; }
 
 .status-bar {
     display: flex;
@@ -235,23 +206,19 @@ body {
     width: 100%;
     margin-top: 8px;
 }
-.status-bar .active {
-    background: #67C23A;
-}
-.status-bar .inactive {
-    background: #F56C6C;
-}
+.status-bar .active { background: #67C23A; }
+.status-bar .inactive { background: #F56C6C; }
 
 /* 切换按钮 */
 .tab-btns {
     display: flex;
     gap: 10px;
 }
-.tab-btns .el-button {
+.tab-btns :deep(.el-button) {
     color: #fff;
     border-color: rgba(255, 255, 255, 0.3);
 }
-.tab-btns .el-button.is-active {
+.tab-btns :deep(.el-button.is-active) {
     background: rgba(255, 255, 255, 0.2);
     border-color: #fff;
 }

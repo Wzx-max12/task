@@ -45,8 +45,8 @@
 
             <el-form-item label="状态" prop="status">
                 <el-radio-group v-model="form.status">
-                    <el-radio :label="1">启用</el-radio>
-                    <el-radio :label="0">禁用</el-radio>
+                    <el-radio :value="1">启用</el-radio>
+                    <el-radio :value="0">禁用</el-radio>
                 </el-radio-group>
             </el-form-item>
         </el-form>
@@ -62,6 +62,7 @@
 
 <script setup>
 import { ref, reactive, watch, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
 import { registerUser, updateUser } from '../api/user.js'
 
 const props = defineProps({
@@ -80,7 +81,7 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const dialogTitle = ref('新增用户')
 
-const form = reactive({
+const defaultForm = () => ({
     id: null,
     username: '',
     password: '',
@@ -89,6 +90,8 @@ const form = reactive({
     email: '',
     status: 1
 })
+
+const form = reactive(defaultForm())
 
 const rules = {
     username: [
@@ -121,13 +124,7 @@ const rules = {
 }
 
 const resetForm = () => {
-    form.id = null
-    form.username = ''
-    form.password = ''
-    form.nickname = ''
-    form.phone = ''
-    form.email = ''
-    form.status = 1
+    Object.assign(form, defaultForm())
     nextTick(() => {
         formRef.value?.clearValidate()
     })
@@ -138,13 +135,15 @@ const openDialog = () => {
     if (props.editData) {
         isEdit.value = true
         dialogTitle.value = '编辑用户'
-        form.id = props.editData.id
-        form.username = props.editData.username || ''
-        form.password = ''
-        form.nickname = props.editData.nickname || ''
-        form.phone = props.editData.phone || ''
-        form.email = props.editData.email || ''
-        form.status = props.editData.status ?? 1
+        Object.assign(form, {
+            id: props.editData.id,
+            username: props.editData.username || '',
+            password: '',
+            nickname: props.editData.nickname || '',
+            phone: props.editData.phone || '',
+            email: props.editData.email || '',
+            status: props.editData.status ?? 1
+        })
     } else {
         isEdit.value = false
         dialogTitle.value = '新增用户'
@@ -155,36 +154,35 @@ const openDialog = () => {
 const submitForm = async () => {
     if (!formRef.value) return
 
-    await formRef.value.validate(async (valid) => {
-        if (!valid) return
+    try {
+        await formRef.value.validate()
+    } catch {
+        return // 验证未通过
+    }
 
-        submitting.value = true
-        try {
-            const submitData = { ...form }
-            if (isEdit.value && !submitData.password) {
-                delete submitData.password
-            }
-
-            let res
-            if (isEdit.value) {
-                res = await updateUser(submitData)
-            } else {
-                res = await registerUser(submitData)
-            }
-
-            if (res.code === 200) {
-                alert(isEdit.value ? '修改成功！' : '新增成功！')
-                dialogVisible.value = false
-                emit('success')
-            } else {
-                alert(res.message || '操作失败')
-            }
-        } catch (err) {
-            // 错误已在拦截器中处理
-        } finally {
-            submitting.value = false
+    submitting.value = true
+    try {
+        const submitData = { ...form }
+        if (isEdit.value && !submitData.password) {
+            delete submitData.password
         }
-    })
+
+        const res = isEdit.value
+            ? await updateUser(submitData)
+            : await registerUser(submitData)
+
+        if (res.code === 200) {
+            ElMessage.success(isEdit.value ? '修改成功！' : '新增成功！')
+            dialogVisible.value = false
+            emit('success')
+        } else {
+            ElMessage.error(res.message || '操作失败')
+        }
+    } catch (err) {
+        // 错误已在拦截器中处理
+    } finally {
+        submitting.value = false
+    }
 }
 
 watch(() => props.visible, (val) => {

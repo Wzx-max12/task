@@ -80,10 +80,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserPage, deleteUser } from '../api/user.js'
 
-// ===== props =====
 const props = defineProps({
     query: {
         type: Object,
@@ -93,80 +93,106 @@ const props = defineProps({
 
 const emit = defineEmits(['add', 'edit', 'dataChanged', 'update:query'])
 
-// ===== 状态 =====
-const loading = ref(false)
-const tableData = ref([])
-const total = ref(0)
+// 搜索条件
 const pageNum = ref(props.query.pageNum || 1)
 const pageSize = ref(props.query.pageSize || 10)
 const searchUsername = ref(props.query.username || '')
 const searchStatus = ref(props.query.status ?? null)
 
-// ===== 方法 =====
+const searchParams = computed(() => ({
+    username: searchUsername.value,
+    status: searchStatus.value,
+    pageNum: pageNum.value,
+    pageSize: pageSize.value
+}))
+
+// 数据状态
+const loading = ref(false)
+const tableData = ref([])
+const total = ref(0)
+
+// 加载数据
 const loadData = async () => {
+    const params = searchParams.value
     loading.value = true
+
     try {
-        const params = {
-            username: searchUsername.value,
-            status: searchStatus.value,
-            pageNum: pageNum.value,
-            pageSize: pageSize.value
-        }
         const res = await getUserPage(params)
         if (res.code === 200) {
-            tableData.value = res.data?.list || []
-            total.value = res.data?.total || 0
-            // 同步到父组件
+            const { list = [], total: totalCount = 0 } = res.data || {}
+            tableData.value = list
+            total.value = totalCount
             emit('update:query', params)
         }
     } catch (err) {
-        // 错误已在拦截器中处理
+        console.error('加载失败:', err)
     } finally {
         loading.value = false
     }
 }
 
+// 监听搜索条件变化 → 自动加载
+watch(searchParams, loadData)
+
+// 搜索
 const handleSearch = () => {
     pageNum.value = 1
-    loadData()
 }
 
 const resetSearch = () => {
     searchUsername.value = ''
     searchStatus.value = null
     pageNum.value = 1
-    loadData()
 }
 
+// 格式化时间
 const formatTime = (t) => {
     if (!t) return '-'
     return t.replace('T', ' ').slice(0, 16)
 }
 
-const handleDelete = (row) => {
-    if (!confirm(`确定要删除用户「${row.username}」吗？`)) return
+// 删除
+const handleDelete = async (row) => {
+    try {
+        await ElMessageBox.confirm(
+            `确定要删除用户「${row.username}」吗？`,
+            '提示',
+            { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+        )
+    } catch {
+        return // 取消删除
+    }
 
-    deleteUser(row.id).then((res) => {
+    try {
+        const res = await deleteUser(row.id)
         if (res.code === 200) {
-            alert('删除成功！')
+            ElMessage.success('删除成功！')
             loadData()
             emit('dataChanged')
         } else {
-            alert(res.message || '删除失败')
+            ElMessage.error(res.message || '删除失败')
         }
-    }).catch(() => {})
+    } catch (err) {
+        console.error('删除报错：', err)
+    }
 }
 
 // 暴露给父组件
 defineExpose({ loadData })
 
-// 监听父组件 query 变化
+// 监听父组件 query 变化（脏检查避免循环触发）
 watch(() => props.query, (newVal) => {
-    if (newVal) {
-        searchUsername.value = newVal.username || ''
-        searchStatus.value = newVal.status ?? null
-        pageNum.value = newVal.pageNum || 1
-        pageSize.value = newVal.pageSize || 10
-    }
-}, { deep: true, immediate: true })
+    if (!newVal) return
+    const changes = []
+    if (searchUsername.value !== (newVal.username || '')) changes.push(() => { searchUsername.value = newVal.username || '' })
+    if (searchStatus.value !== (newVal.status ?? null)) changes.push(() => { searchStatus.value = newVal.status ?? null })
+    if (pageNum.value !== (newVal.pageNum || 1)) changes.push(() => { pageNum.value = newVal.pageNum || 1 })
+    if (pageSize.value !== (newVal.pageSize || 10)) changes.push(() => { pageSize.value = newVal.pageSize || 10 })
+    changes.forEach(fn => fn())
+}, { deep: true })
+
+// 首次加载
+onMounted(() => {
+    loadData()
+})
 </script>
