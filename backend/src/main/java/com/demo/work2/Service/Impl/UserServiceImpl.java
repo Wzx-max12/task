@@ -1,0 +1,173 @@
+package com.demo.work2.Service.Impl;
+
+import com.demo.work2.Common.ResourceNotFoundException;
+import com.demo.work2.Common.ValidateException;
+import com.demo.work2.Common.md5Util;
+import com.demo.work2.Dto.LoginDTO;
+import com.demo.work2.Dto.RegisterDTO;
+import com.demo.work2.Dto.UpdateDto;
+import com.demo.work2.Dto.UserQueryDTO;
+import com.demo.work2.Entity.User;
+import com.demo.work2.Mapper.UserMapper;
+import com.demo.work2.Service.UserService;
+import jakarta.annotation.Resource;
+import org.springframework.stereotype.Service;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+    @Resource
+    private UserMapper userMapper;
+
+    /**
+     * 注册：密码MD5加密存入数据库
+     */
+    @Override
+    public void register(RegisterDTO dto) {
+        // 1. 判断用户名是否已存在
+        User exist = userMapper.selectByUsername(dto.getUsername());
+        if (exist != null) {
+            throw new ValidateException("用户名已被注册");
+        }
+        // 2. MD5加密密码
+        String md5Pwd = md5Util.encrypt(dto.getPassword());
+        // 3. 封装入库对象
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(md5Pwd);
+        user.setNickname(dto.getNickname());
+        user.setPhone(dto.getPhone());
+        user.setEmail(dto.getEmail());
+        user.setStatus(1); // 默认正常
+        userMapper.insert(user);
+    }
+    /**
+     * 登录：校验用户名+MD5密码，返回UUID当作Token
+     */
+    @Override
+    public String login(LoginDTO dto) {
+        User dbUser = userMapper.selectByUsername(dto.getUsername());
+        if (dbUser == null) {
+            throw new ValidateException("用户名不存在");
+        }
+        // 前端明文密码MD5加密后和库中比对
+        String inputMd5 = md5Util.encrypt(dto.getPassword());
+        if (!inputMd5.equals(dbUser.getPassword())) {
+            throw new ValidateException("密码错误");
+        }
+        // 简易Token：实际项目用JWT
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+    @Override
+    public PageInfo<User> getUserList(UserQueryDTO query) {
+        //从DTO读取前端传来的页码、每页条数
+        PageHelper.startPage(query.getPageNum(), query.getPageSize());
+        //先执行，不会触发分页
+        //User user = userMapper.selectById(1L);
+        //把查询条件传入Mapper
+        List<User> userList = userMapper.getUserList(query);
+        //userList是不带分页的全量数据库数据，pageInfo分页参数全部错乱ada
+        return new PageInfo<>(userList);
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        return null;
+    }
+
+    /*
+      分页+条件筛选
+     */
+    /**
+     * 用户详情
+     */
+    @Override
+    public User getUserById(Integer id) {
+        User user = userMapper.selectById(id);
+        //如果user为null 输出异常
+        if (user == null) {
+            throw new ResourceNotFoundException("用户ID:" + id + "不存在");
+        }
+        return user;
+    }
+    /**
+     * 修改用户
+     */
+
+    @Override
+    public void updateUser(UpdateDto updateDto) {
+        // 1.入参校验
+        if (updateDto == null || updateDto.getId() == null) {
+            throw new ValidateException("用户ID不能为空");
+        }
+
+        // 2.查询待修改用户
+        User db = userMapper.selectById(updateDto.getId());
+        if (db == null) {
+            throw new ResourceNotFoundException("待修改用户不存在");
+        }
+
+//        // 3.禁止修改用户名：前端如果传username直接报错
+//        if (updateDto.getUsername() != null) {
+//            throw new ValidateException("用户名不可修改");
+//        }
+
+        //4.构建更新实体，只复制允许修改的字段
+        User updateEntity = new User();
+        updateEntity.setId(updateDto.getId());
+        updateEntity.setNickname(updateDto.getNickname());
+        updateEntity.setPhone(updateDto.getPhone());
+        updateEntity.setEmail(updateDto.getEmail());
+        updateEntity.setStatus(updateDto.getStatus());
+        //将password再次用md5util加密
+        String md5 =md5Util.encrypt(updateDto.getPassword());
+        //将加密后的密码返回给数据库
+        updateEntity.setPassword(md5);
+        userMapper.updateById(updateEntity);
+    }
+
+    @Override
+    public void selectById(Long id) {
+
+    }
+
+    /**
+     * 删除用户
+     */
+//    @Override
+//    public void deleteUser(Long id) {
+//        User db = userMapper.selectById(id);
+//        if (db == null) {
+//            throw new ResourceNotFoundException("用户不存在，无法删除");
+//        }
+//        userMapper.deleteById(id);
+//    }
+    @Override
+    public void deleteUser(Long id){
+     User db = userMapper.selectById(Math.toIntExact(id));
+     if(db == null){
+         throw new ResourceNotFoundException("用户不存在，无法删除");
+     }
+     userMapper.deleteById(id);
+}
+
+    @Override
+    public long getTotalCount() {
+        return userMapper.countAll();
+    }
+
+    @Override
+    public long getActiveCount() {
+        return userMapper.countByStatus(1);
+    }
+
+    @Override
+    public long getRecentWeekCount() {
+        return userMapper.countRecentWeek();
+    }
+
+}
