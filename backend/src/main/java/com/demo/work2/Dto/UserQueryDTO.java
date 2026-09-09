@@ -11,4 +11,6 @@ public class UserQueryDTO {
     // 状态筛选
     private Integer pageNum = 1;
     private Integer pageSize = 10;
+    private String sortField;
+    private String sortOrder;
 }

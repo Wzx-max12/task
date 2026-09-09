@@ -7,14 +7,12 @@
                     v-model="searchUsername"
                     placeholder="搜索用户名"
                     clearable
-                    @clear="handleSearch"
                     @keyup.enter="handleSearch"
                 />
                 <el-select
                     v-model="searchStatus"
                     placeholder="全部状态"
                     clearable
-                    @change="handleSearch"
                 >
                     <el-option label="启用" :value="1" />
                     <el-option label="禁用" :value="0" />
@@ -34,22 +32,28 @@
             stripe
             v-loading="loading"
             style="width: 100%"
+            @sort-change="handleSortChange"
         >
             <el-table-column type="index" label="#" width="55" />
-            <el-table-column prop="username" label="用户名" width="120" />
+            <el-table-column prop="username" label="用户名" width="120" sortable="custom" />
             <el-table-column prop="nickname" label="昵称" width="120" />
             <el-table-column prop="phone" label="电话" width="130" />
             <el-table-column prop="email" label="邮箱" min-width="170" />
-            <el-table-column prop="status" label="状态" width="80" align="center">
+            <el-table-column prop="status" label="状态" width="80" align="center" sortable="custom">
                 <template #default="{ row }">
                     <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
                         {{ row.status === 1 ? '启用' : '禁用' }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="注册时间" width="160">
+            <el-table-column prop="createTime" label="注册时间" width="160" sortable="custom">
                 <template #default="{ row }">
                     {{ formatTime(row.createTime) }}
+                </template>
+            </el-table-column>
+            <el-table-column prop="updateTime" label="更新时间" width="160" sortable="custom">
+                <template #default="{ row }">
+                    {{ formatTime(row.updateTime) }}
                 </template>
             </el-table-column>
             <el-table-column label="操作" width="180" fixed="right" align="center">
@@ -98,12 +102,16 @@ const pageNum = ref(props.query.pageNum || 1)
 const pageSize = ref(props.query.pageSize || 10)
 const searchUsername = ref(props.query.username || '')
 const searchStatus = ref(props.query.status ?? null)
+const sortField = ref(props.query.sortField || '')
+const sortOrder = ref(props.query.sortOrder || '')
 
 const searchParams = computed(() => ({
     username: searchUsername.value,
     status: searchStatus.value,
     pageNum: pageNum.value,
-    pageSize: pageSize.value
+    pageSize: pageSize.value,
+    sortField: sortField.value,
+    sortOrder: sortOrder.value
 }))
 
 // 数据状态
@@ -131,18 +139,25 @@ const loadData = async () => {
     }
 }
 
-// 监听搜索条件变化 → 自动加载
-watch(searchParams, loadData)
-
 // 搜索
 const handleSearch = () => {
     pageNum.value = 1
+    loadData()
 }
 
 const resetSearch = () => {
     searchUsername.value = ''
     searchStatus.value = null
     pageNum.value = 1
+    loadData()
+}
+
+// 排序
+const handleSortChange = ({ prop, order }) => {
+    sortField.value = order ? prop : ''
+    sortOrder.value = order || ''
+    pageNum.value = 1
+    loadData()
 }
 
 // 格式化时间

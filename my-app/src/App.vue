@@ -222,7 +222,7 @@ const onDataChanged = () => {
     gap: 10px;
 }
 .tab-btns :deep(.el-button) {
-    color: #fff;
+    color: #272525;
     border-color: rgba(255, 255, 255, 0.3);
 }
 .tab-btns :deep(.el-button.is-active) {

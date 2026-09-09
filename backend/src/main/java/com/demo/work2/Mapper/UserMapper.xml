@@ -26,7 +26,32 @@
                 AND status = #{query.status}
             </if>
         </where>
-        ORDER BY id DESC
+        ORDER BY
+        <choose>
+            <when test="query.sortField == 'username'">
+                username
+            </when>
+            <when test="query.sortField == 'status'">
+                status
+            </when>
+            <when test="query.sortField == 'createTime'">
+                create_time
+            </when>
+            <when test="query.sortField == 'updateTime'">
+                update_time
+            </when>
+            <otherwise>
+                id
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="query.sortOrder == 'ascending'">
+                ASC
+            </when>
+            <otherwise>
+                DESC
+            </otherwise>
+        </choose>
     </select>
 
     <select id="selectByUsername" resultMap="BaseResultMap">

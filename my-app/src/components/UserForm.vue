@@ -22,7 +22,7 @@
                 </div>
             </el-form-item>
 
-            <el-form-item label="密码" prop="password">
+            <el-form-item label="密码" prop="password"required>
                 <el-input
                     v-model="form.password"
                     :placeholder="isEdit ? '留空则不修改密码' : '请输入密码'"
@@ -30,6 +30,14 @@
                     show-password
                 />
             </el-form-item>
+             <el-form-item label="确认密码" prop="confirmPassword" required>
+      <el-input 
+      v-model="form.confirmPassword" 
+      type="password" 
+      show-password 
+      placeholder="再次输入密码" 
+      />
+    </el-form-item>
 
             <el-form-item label="昵称" prop="nickname">
                 <el-input v-model="form.nickname" placeholder="请输入昵称" />
@@ -88,6 +96,7 @@ const defaultForm = () => ({
     nickname: '',
     phone: '',
     email: '',
+    confirmPassword: '',
     status: 1
 })
 
@@ -105,6 +114,8 @@ const rules = {
                     callback(new Error('请输入密码'))
                 } else if (isEdit.value && value && value.length < 6) {
                     callback(new Error('密码至少 6 位'))
+                } else if (form.confirmPassword && value !== form.confirmPassword) {
+                    callback(new Error('两次输入的密码不一致'))
                 } else {
                     callback()
                 }
@@ -120,6 +131,18 @@ const rules = {
     ],
     email: [
         { type: 'email', message: '请输入正确邮箱', trigger: 'blur' }
+    ],
+    confirmPassword: [
+        {
+            validator(rule, value, callback) {
+                if (!value || value !== form.password) {
+                    callback(new Error('两次输入的密码不一致'))
+                } else {
+                    callback()
+                }
+            },
+            trigger: 'blur'
+        }
     ]
 }
 
@@ -152,6 +175,13 @@ const openDialog = () => {
 }
 
 const submitForm = async () => {
+    
+     const submitData = { ...form }
+    delete submitData.confirmPassword
+    
+    if (isEdit.value && !submitData.password) {
+        delete submitData.password
+    }
     if (!formRef.value) return
 
     try {
