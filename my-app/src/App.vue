@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import UserTable from './components/UserTable.vue'
 import UserForm from './components/UserForm.vue'
 import UserStats from './components/UserStats.vue'
@@ -61,7 +61,7 @@ const activeTab = ref('list')
 const dialogVisible = ref(false)
 const editData = ref(null)
 
-const query = reactive({
+const query = ref({
     username: '',
     status: null,
     pageNum: 1,

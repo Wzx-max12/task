@@ -11,11 +11,29 @@
                 />
                 <el-select
                     v-model="searchStatus"
-                    placeholder="全部状态"
+                    placeholder="状态"
                     clearable
                 >
                     <el-option label="启用" :value="1" />
                     <el-option label="禁用" :value="0" />
+                </el-select>
+                <el-select
+                    v-model="searchDepartment"
+                    placeholder="部门"
+                    clearable
+                >
+                    <el-option label="人事部门" value="人事部门" />
+                    <el-option label="管理部门" value="管理部门" />
+                    <el-option label="财务部门" value="财务部门" />
+                </el-select>
+                <el-select
+                    v-model="searchPosition"
+                    placeholder="职位"
+                    clearable
+                >
+                    <el-option label="经理" value="经理" />
+                    <el-option label="副经理" value="副经理" />
+                    <el-option label="员工" value="员工" />
                 </el-select>
                 <el-button type="primary" @click="handleSearch">搜索</el-button>
                 <el-button @click="resetSearch">重置</el-button>
@@ -39,6 +57,8 @@
             <el-table-column prop="nickname" label="昵称" width="120" />
             <el-table-column prop="phone" label="电话" width="130" />
             <el-table-column prop="email" label="邮箱" min-width="170" />
+            <el-table-column prop="department" label="部门" width="100" />
+            <el-table-column prop="position" label="职位" width="90" />
             <el-table-column prop="status" label="状态" width="80" align="center" sortable="custom">
                 <template #default="{ row }">
                     <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
@@ -102,12 +122,16 @@ const pageNum = ref(props.query.pageNum || 1)
 const pageSize = ref(props.query.pageSize || 10)
 const searchUsername = ref(props.query.username || '')
 const searchStatus = ref(props.query.status ?? null)
+const searchDepartment = ref(props.query.department || '')
+const searchPosition = ref(props.query.position || '')
 const sortField = ref(props.query.sortField || '')
 const sortOrder = ref(props.query.sortOrder || '')
 
 const searchParams = computed(() => ({
     username: searchUsername.value,
     status: searchStatus.value,
+    department: searchDepartment.value,
+    position: searchPosition.value,
     pageNum: pageNum.value,
     pageSize: pageSize.value,
     sortField: sortField.value,
@@ -148,6 +172,8 @@ const handleSearch = () => {
 const resetSearch = () => {
     searchUsername.value = ''
     searchStatus.value = null
+    searchDepartment.value = ''
+    searchPosition.value = ''
     pageNum.value = 1
     loadData()
 }
@@ -201,6 +227,8 @@ watch(() => props.query, (newVal) => {
     const changes = []
     if (searchUsername.value !== (newVal.username || '')) changes.push(() => { searchUsername.value = newVal.username || '' })
     if (searchStatus.value !== (newVal.status ?? null)) changes.push(() => { searchStatus.value = newVal.status ?? null })
+    if (searchDepartment.value !== (newVal.department || '')) changes.push(() => { searchDepartment.value = newVal.department || '' })
+    if (searchPosition.value !== (newVal.position || '')) changes.push(() => { searchPosition.value = newVal.position || '' })
     if (pageNum.value !== (newVal.pageNum || 1)) changes.push(() => { pageNum.value = newVal.pageNum || 1 })
     if (pageSize.value !== (newVal.pageSize || 10)) changes.push(() => { pageSize.value = newVal.pageSize || 10 })
     changes.forEach(fn => fn())

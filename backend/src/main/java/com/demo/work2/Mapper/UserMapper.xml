@@ -11,6 +11,8 @@
         <result column="phone" property="phone"/>
         <result column="email" property="email"/>
         <result column="status" property="status"/>
+        <result column="department" property="department"/>
+        <result column="position" property="position"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
@@ -24,6 +26,12 @@
             </if>
             <if test="query.status != null">
                 AND status = #{query.status}
+            </if>
+            <if test="query.department != null and query.department.trim() != ''">
+                AND department = #{query.department}
+            </if>
+            <if test="query.position != null and query.position.trim() != ''">
+                AND position = #{query.position}
             </if>
         </where>
         ORDER BY
@@ -63,8 +71,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO sys_user (username, password, nickname, phone, email, status)
-        VALUES (#{username}, #{password}, #{nickname}, #{phone}, #{email}, #{status})
+        INSERT INTO sys_user (username, password, nickname, phone, email, status, department, position)
+        VALUES (#{username}, #{password}, #{nickname}, #{phone}, #{email}, #{status}, #{department}, #{position})
     </insert>
 
     <update id="updateById">
@@ -75,6 +83,8 @@
             <if test="phone != null and phone != ''">phone = #{phone},</if>
             <if test="email != null and email != ''">email = #{email},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="department != null and department != ''">department = #{department},</if>
+            <if test="position != null and position != ''">position = #{position},</if>
             update_time = NOW()
         </set>
         WHERE id = #{id}

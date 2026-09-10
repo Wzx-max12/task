@@ -22,7 +22,7 @@
                 </div>
             </el-form-item>
 
-            <el-form-item label="密码" prop="password"required>
+            <el-form-item label="密码" prop="password" :required="!isEdit">
                 <el-input
                     v-model="form.password"
                     :placeholder="isEdit ? '留空则不修改密码' : '请输入密码'"
@@ -30,12 +30,12 @@
                     show-password
                 />
             </el-form-item>
-             <el-form-item label="确认密码" prop="confirmPassword" required>
-      <el-input 
-      v-model="form.confirmPassword" 
-      type="password" 
-      show-password 
-      placeholder="再次输入密码" 
+             <el-form-item label="确认密码" prop="confirmPassword" :required="!isEdit">
+      <el-input
+      v-model="form.confirmPassword"
+      type="password"
+      show-password
+      :placeholder="isEdit ? '修改密码时需再次确认' : '再次输入密码'"
       />
     </el-form-item>
 
@@ -49,6 +49,22 @@
 
             <el-form-item label="邮箱" prop="email">
                 <el-input v-model="form.email" placeholder="请输入邮箱" />
+            </el-form-item>
+
+            <el-form-item label="部门" prop="department">
+                <el-select v-model="form.department" placeholder="请选择部门" clearable style="width: 100%">
+                    <el-option label="人事部门" value="人事部门" />
+                    <el-option label="管理部门" value="管理部门" />
+                    <el-option label="财务部门" value="财务部门" />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item label="职位" prop="position">
+                <el-select v-model="form.position" placeholder="请选择职位" clearable style="width: 100%">
+                    <el-option label="经理" value="经理" />
+                    <el-option label="副经理" value="副经理" />
+                    <el-option label="员工" value="员工" />
+                </el-select>
             </el-form-item>
 
             <el-form-item label="状态" prop="status">
@@ -69,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { registerUser, updateUser } from '../api/user.js'
 
@@ -96,15 +112,17 @@ const defaultForm = () => ({
     nickname: '',
     phone: '',
     email: '',
+    department: '',
+    position: '',
     confirmPassword: '',
     status: 1
 })
 
 const form = reactive(defaultForm())
 
-const rules = {
+const rules = computed(() => ({
     username: [
-        { required: true, message: '请输入用户名', trigger: 'blur' },
+        { required: !isEdit.value, message: '请输入用户名', trigger: 'blur' },
         { min: 3, max: 20, message: '用户名 3-20 位', trigger: 'blur' }
     ],
     password: [
@@ -112,10 +130,8 @@ const rules = {
             validator(rule, value, callback) {
                 if (!isEdit.value && !value) {
                     callback(new Error('请输入密码'))
-                } else if (isEdit.value && value && value.length < 6) {
-                    callback(new Error('密码至少 6 位'))
-                } else if (form.confirmPassword && value !== form.confirmPassword) {
-                    callback(new Error('两次输入的密码不一致'))
+                } else if (value && (value.length < 6 || value.length > 16)) {
+                    callback(new Error('密码长度 6-16 位'))
                 } else {
                     callback()
                 }
@@ -124,7 +140,7 @@ const rules = {
         }
     ],
     nickname: [
-        { required: true, message: '请输入昵称', trigger: 'blur' }
+        { required: !isEdit.value, message: '请输入昵称', trigger: 'blur' }
     ],
     phone: [
         { pattern: /^1[3-9]\d{9}$/, message: '请输入正确手机号', trigger: 'blur' }
@@ -135,7 +151,12 @@ const rules = {
     confirmPassword: [
         {
             validator(rule, value, callback) {
-                if (!value || value !== form.password) {
+                if (!form.password) {
+                    // 未填写密码（编辑模式留空）时无需确认
+                    callback()
+                } else if (!value) {
+                    callback(new Error('请再次输入密码'))
+                } else if (value !== form.password) {
                     callback(new Error('两次输入的密码不一致'))
                 } else {
                     callback()
@@ -144,7 +165,7 @@ const rules = {
             trigger: 'blur'
         }
     ]
-}
+}))
 
 const resetForm = () => {
     Object.assign(form, defaultForm())
@@ -165,6 +186,8 @@ const openDialog = () => {
             nickname: props.editData.nickname || '',
             phone: props.editData.phone || '',
             email: props.editData.email || '',
+            department: props.editData.department || '',
+            position: props.editData.position || '',
             status: props.editData.status ?? 1
         })
     } else {
@@ -175,13 +198,6 @@ const openDialog = () => {
 }
 
 const submitForm = async () => {
-    
-     const submitData = { ...form }
-    delete submitData.confirmPassword
-    
-    if (isEdit.value && !submitData.password) {
-        delete submitData.password
-    }
     if (!formRef.value) return
 
     try {
@@ -193,6 +209,8 @@ const submitForm = async () => {
     submitting.value = true
     try {
         const submitData = { ...form }
+        delete submitData.confirmPassword
+        // 编辑模式下密码留空则不修改密码
         if (isEdit.value && !submitData.password) {
             delete submitData.password
         }

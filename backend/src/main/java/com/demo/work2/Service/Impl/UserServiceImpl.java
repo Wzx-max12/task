@@ -43,6 +43,8 @@ public class UserServiceImpl implements UserService {
         user.setPhone(dto.getPhone());
         user.setEmail(dto.getEmail());
         user.setStatus(1); // 默认正常
+        user.setDepartment(dto.getDepartment());
+        user.setPosition(dto.getPosition());
         userMapper.insert(user);
     }
     /**
@@ -123,10 +125,13 @@ public class UserServiceImpl implements UserService {
         updateEntity.setPhone(updateDto.getPhone());
         updateEntity.setEmail(updateDto.getEmail());
         updateEntity.setStatus(updateDto.getStatus());
-        //将password再次用md5util加密
-        String md5 =md5Util.encrypt(updateDto.getPassword());
-        //将加密后的密码返回给数据库
-        updateEntity.setPassword(md5);
+        updateEntity.setDepartment(updateDto.getDepartment());
+        updateEntity.setPosition(updateDto.getPosition());
+        //密码留空则不修改密码；填写时重新用MD5加密
+        if (updateDto.getPassword() != null && !updateDto.getPassword().trim().isEmpty()) {
+            String md5 = md5Util.encrypt(updateDto.getPassword());
+            updateEntity.setPassword(md5);
+        }
         userMapper.updateById(updateEntity);
     }
 
@@ -138,14 +143,6 @@ public class UserServiceImpl implements UserService {
     /**
      * 删除用户
      */
-//    @Override
-//    public void deleteUser(Long id) {
-//        User db = userMapper.selectById(id);
-//        if (db == null) {
-//            throw new ResourceNotFoundException("用户不存在，无法删除");
-//        }
-//        userMapper.deleteById(id);
-//    }
     @Override
     public void deleteUser(Long id){
      User db = userMapper.selectById(Math.toIntExact(id));

@@ -9,6 +9,10 @@ public class UserQueryDTO {
     // 用户名模糊查询
     private Integer status;
     // 状态筛选
+    private String department;
+    // 部门筛选
+    private String position;
+    // 职位筛选
     private Integer pageNum = 1;
     private Integer pageSize = 10;
     private String sortField;

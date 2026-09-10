@@ -19,6 +19,8 @@ public class User {
     private String phone;
     private String email;
     private Integer status;
+    private String department;
+    private String position;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }
