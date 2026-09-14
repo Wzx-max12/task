@@ -1,9 +1,10 @@
 <template>
+    <!-- 用户表单弹窗 -->
     <el-dialog
-        v-model="dialogVisible"
+     <!-- 显示隐藏 -->v-model="dialogVisible"
         :title="dialogTitle"
         width="500px"
-        destroy-on-close
+    <!-- 关闭弹窗销毁DOM-->destroy-on-close
     >
         <el-form
             ref="formRef"
@@ -100,9 +101,9 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'success'])
 
 const formRef = ref(null)
-const submitting = ref(false)
+const submitting = ref(false) //提交loading状态
 const dialogVisible = ref(false)
-const isEdit = ref(false)
+const isEdit = ref(false)  //标记是否编辑模式
 const dialogTitle = ref('新增用户')
 
 const defaultForm = () => ({
@@ -119,7 +120,7 @@ const defaultForm = () => ({
 })
 
 const form = reactive(defaultForm())
-
+//computed：表单验证规则
 const rules = computed(() => ({
     username: [
         { required: !isEdit.value, message: '请输入用户名', trigger: 'blur' },
@@ -173,7 +174,7 @@ const resetForm = () => {
         formRef.value?.clearValidate()
     })
 }
-
+//打开弹窗初始化函数
 const openDialog = () => {
     dialogVisible.value = true
     if (props.editData) {
@@ -182,7 +183,7 @@ const openDialog = () => {
         Object.assign(form, {
             id: props.editData.id,
             username: props.editData.username || '',
-            password: '',
+            password: '', //编辑打开时密码清空
             nickname: props.editData.nickname || '',
             phone: props.editData.phone || '',
             email: props.editData.email || '',
@@ -191,6 +192,7 @@ const openDialog = () => {
             status: props.editData.status ?? 1
         })
     } else {
+        //新增模式
         isEdit.value = false
         dialogTitle.value = '新增用户'
         resetForm()
@@ -201,7 +203,7 @@ const submitForm = async () => {
     if (!formRef.value) return
 
     try {
-        await formRef.value.validate()
+        await formRef.value.validate() //触发全部表单校验，失败直接catch返回
     } catch {
         return // 验证未通过
     }
@@ -210,7 +212,8 @@ const submitForm = async () => {
     try {
         const submitData = { ...form }
         delete submitData.confirmPassword
-        // 编辑模式下密码留空则不修改密码
+       // 确认密码只前端校验，删掉不传给后端
+        // 编辑模式并且密码为空：删掉password字段，不提交
         if (isEdit.value && !submitData.password) {
             delete submitData.password
         }
